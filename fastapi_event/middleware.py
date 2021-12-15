@@ -4,7 +4,7 @@ from starlette.middleware.base import (
     RequestResponseEndpoint,
 )
 
-from fastapi_event_publisher.handler import event_handler
+from fastapi_event.handler import event_handler
 
 
 class EventHandlerMiddleware(BaseHTTPMiddleware):

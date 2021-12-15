@@ -3,8 +3,8 @@ from typing import Type, Dict, Union, Optional
 
 from pydantic import BaseModel
 
-from fastapi_event_publisher.base import BaseEvent
-from fastapi_event_publisher.exceptions import (
+from fastapi_event.base import BaseEvent
+from fastapi_event.exceptions import (
     InvalidEventTypeException,
     InvalidParameterTypeException,
 )
