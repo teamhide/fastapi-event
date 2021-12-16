@@ -1,3 +1,4 @@
+import inspect
 from contextvars import ContextVar
 from typing import Type, Dict, Union, Optional, NoReturn
 
@@ -8,6 +9,8 @@ from fastapi_event.exceptions import (
     InvalidEventTypeException,
     InvalidParameterTypeException,
     EmptyContextException,
+    RequiredParameterException,
+    ParameterCountException,
 )
 
 _handler_context: ContextVar[Optional, "EventHandler"] = ContextVar(
@@ -15,19 +18,39 @@ _handler_context: ContextVar[Optional, "EventHandler"] = ContextVar(
 )
 
 
-class EventHandler:
-    def __init__(self):
-        self.events: Dict[Type[BaseEvent], Union[BaseModel, None]] = {}
+class EventHandlerValidator:
+    EVENT_PARAMETER_COUNT = 2
 
-    async def store(
+    async def validate(
         self, event: Type[BaseEvent], parameter: BaseModel = None,
-    ) -> None:
+    ) -> Optional[NoReturn]:
         if not issubclass(event, BaseEvent):
             raise InvalidEventTypeException
 
         if parameter and not isinstance(parameter, BaseModel):
             raise InvalidParameterTypeException
 
+        signature = inspect.signature(event.run)
+        func_parameters = signature.parameters
+        if len(func_parameters) != self.EVENT_PARAMETER_COUNT:
+            raise ParameterCountException
+
+        base_parameter = func_parameters.get("parameter")
+        if base_parameter.default is not None and not parameter:
+            raise RequiredParameterException(
+                cls_name=base_parameter.__class__.__name__,
+            )
+
+
+class EventHandler:
+    def __init__(self, validator: EventHandlerValidator):
+        self.events: Dict[Type[BaseEvent], Union[BaseModel, None]] = {}
+        self.validator = validator
+
+    async def store(
+        self, event: Type[BaseEvent], parameter: BaseModel = None,
+    ) -> None:
+        await self.validator.validate(event=event, parameter=parameter)
         self.events[event] = parameter
 
     async def publish(self) -> None:
@@ -61,7 +84,8 @@ class EventHandlerDelegator(metaclass=EventHandlerMeta):
         self.token = None
 
     def __enter__(self):
-        self.token = _handler_context.set(EventHandler())
+        validator = EventHandlerValidator()
+        self.token = _handler_context.set(EventHandler(validator=validator))
         return type(self)
 
     def __exit__(self, exc_type, exc_value, traceback):
