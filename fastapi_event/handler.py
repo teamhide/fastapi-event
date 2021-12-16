@@ -1,5 +1,5 @@
 from contextvars import ContextVar
-from typing import Type, Dict, Union, Optional
+from typing import Type, Dict, Union, Optional, NoReturn
 
 from pydantic import BaseModel
 
@@ -7,10 +7,11 @@ from fastapi_event.base import BaseEvent
 from fastapi_event.exceptions import (
     InvalidEventTypeException,
     InvalidParameterTypeException,
+    EmptyContextException,
 )
 
 _handler_context: ContextVar[Optional, "EventHandler"] = ContextVar(
-    "_handler", default=None,
+    "_handler_context", default=None,
 )
 
 
@@ -40,20 +41,19 @@ class EventHandler:
 class EventHandlerMeta(type):
     async def store(
         self, event: Type[BaseEvent], parameter: BaseModel = None,
-    ):
+    ) -> None:
         handler = self._get_event_handler()
         await handler.store(event=event, parameter=parameter)
 
-    async def publish(self):
+    async def publish(self) -> None:
         handler = self._get_event_handler()
         await handler.publish()
 
-    def _get_event_handler(self) -> EventHandler:
-        handler = _handler_context.get()
-        if not handler:
-            raise
-
-        return handler
+    def _get_event_handler(self) -> Union[EventHandler, NoReturn]:
+        try:
+            return _handler_context.get()
+        except LookupError:
+            raise EmptyContextException
 
 
 class EventHandlerDelegator(metaclass=EventHandlerMeta):
@@ -68,4 +68,4 @@ class EventHandlerDelegator(metaclass=EventHandlerMeta):
         _handler_context.reset(self.token)
 
 
-event_handler: EventHandlerMeta = EventHandlerDelegator
+event_handler: Type[EventHandlerDelegator] = EventHandlerDelegator
