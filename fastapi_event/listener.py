@@ -2,6 +2,9 @@ from fastapi_event.handler import event_handler
 
 
 class EventListener:
+    def __init__(self, run_at_once: bool = False):
+        self.run_at_once = run_at_once
+
     def __call__(self, func):
         async def _inner(*args, **kwargs):
             try:
@@ -9,7 +12,7 @@ class EventListener:
             except Exception as e:
                 raise e from None
 
-            await event_handler.publish()
+            await event_handler.publish(run_at_once=self.run_at_once)
             return result
 
         return _inner
