@@ -1,40 +1,19 @@
 import pytest
-from pydantic import BaseModel
 
-from fastapi_event import event_handler, BaseEvent
+from fastapi_event import event_handler
 from fastapi_event.exceptions import (
     InvalidEventTypeException,
     InvalidParameterTypeException,
     ParameterCountException,
     RequiredParameterException,
 )
-
-
-class TestEvent(BaseEvent):
-    __test__ = False
-
-    async def run(self, parameter=None) -> None:
-        pass
-
-
-class TestEventParameter(BaseModel):
-    __test__ = False
-
-    content: str
-
-
-class TestEventDoNotHaveParameter(BaseEvent):
-    __test__ = False
-
-    async def run(self):
-        pass
-
-
-class TestEventParameterNotNone(BaseEvent):
-    __test__ = False
-
-    async def run(self, parameter):
-        pass
+from tests.events import (
+    TestSecondEvent,
+    TestEventParameterNotNone,
+    TestEvent,
+    TestEventDoNotHaveParameter,
+    TestEventParameter,
+)
 
 
 @pytest.mark.asyncio
@@ -57,6 +36,31 @@ async def test_store_without_parameter(app_with_middleware, client):
 
 
 @pytest.mark.asyncio
+async def test_multiple_store_without_parameter(app_with_middleware, client):
+    app = app_with_middleware
+
+    async def test():
+        await event_handler.store(
+            event=TestEvent
+        )
+        await event_handler.store(
+            event=TestSecondEvent
+        )
+        handler = event_handler._get_event_handler()
+        assert len(handler.events) == 2
+        assert TestEvent in handler.events
+        assert TestSecondEvent in handler.events
+        assert handler.events[TestEvent] is None
+        assert handler.events[TestSecondEvent] is None
+
+    @app.get("/")
+    async def get():
+        await test()
+
+    client.get("/")
+
+
+@pytest.mark.asyncio
 async def test_store_with_parameter(app_with_middleware, client):
     app = app_with_middleware
 
@@ -66,8 +70,36 @@ async def test_store_with_parameter(app_with_middleware, client):
             parameter=TestEventParameter(content="content"),
         )
         handler = event_handler._get_event_handler()
+        assert len(handler.events) == 1
         assert TestEvent in handler.events
         assert isinstance(handler.events[TestEvent], TestEventParameter)
+
+    @app.get("/")
+    async def get():
+        await test()
+
+    client.get("/")
+
+
+@pytest.mark.asyncio
+async def test_multiple_store_with_parameter(app_with_middleware, client):
+    app = app_with_middleware
+
+    async def test():
+        await event_handler.store(
+            event=TestEvent,
+            parameter=TestEventParameter(content="content"),
+        )
+        await event_handler.store(
+            event=TestSecondEvent,
+            parameter=TestEventParameter(content="content"),
+        )
+        handler = event_handler._get_event_handler()
+        assert len(handler.events) == 2
+        assert TestEvent in handler.events
+        assert TestSecondEvent in handler.events
+        assert isinstance(handler.events[TestEvent], TestEventParameter)
+        assert isinstance(handler.events[TestSecondEvent], TestEventParameter)
 
     @app.get("/")
     async def get():

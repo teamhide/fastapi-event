@@ -2,8 +2,6 @@
 [![license]](/LICENSE)
 [![pypi]](https://pypi.org/project/fastapi-event/)
 [![pyversions]](http://pypi.python.org/pypi/fastapi-event)
-![badge](https://action-badges.now.sh/teamhide/fastapi-event)
-[![Downloads](https://pepy.tech/badge/fastapi-event)](https://pepy.tech/project/fastapi-event)
 
 ---
 
@@ -28,7 +26,7 @@ class TestEvent(BaseEvent):
         ...
 ```
 
-You have to inherit `BaseEvent` and override `run()` method.
+Inherit `BaseEvent` and override `run()` method.
 
 ### Parameter(optional)
 
@@ -66,6 +64,14 @@ async def test():
 
 Set `@EventListener()` decorator on the function that emits the event.
 
+```python
+@EventListener(run_at_once=True)
+```
+
+If you pass `run_at_once=True`, it will execute through `asyncio.gather()`.
+
+Otherwise, they are executed in the order they were stored.
+
 ### Store event
 
 ```python
@@ -83,3 +89,7 @@ async def test():
 Store your event to handler via `store()` method. (parameter is optional)
 
 An event will be emitted after the function has finished executing.
+
+[license]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+[pypi]: https://img.shields.io/pypi/v/fastapi-event
+[pyversions]: https://img.shields.io/pypi/pyversions/fastapi-event
