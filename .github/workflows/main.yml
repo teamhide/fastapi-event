@@ -1,0 +1,35 @@
+name: fastapi-event
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+
+jobs:
+  build:
+    name: CI
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Setup Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    - name: Install pytest
+      run: pip3 install pytest
+
+    - name: Install pytest-asyncio
+      run: pip3 install pytest-asyncio
+
+    - name: Install fastapi
+      run: pip3 install fastapi
+
+    - name: Install requests
+      run: pip3 install requests
+
+    - name: Testing
+      run: pytest
