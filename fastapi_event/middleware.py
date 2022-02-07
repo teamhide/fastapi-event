@@ -9,7 +9,9 @@ from fastapi_event.handler import event_handler
 
 class EventHandlerMiddleware(BaseHTTPMiddleware):
     async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint,
+        self,
+        request: Request,
+        call_next: RequestResponseEndpoint,
     ):
         try:
             with event_handler():

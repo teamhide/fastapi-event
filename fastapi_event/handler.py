@@ -1,7 +1,7 @@
 import asyncio
 import inspect
 from contextvars import ContextVar
-from typing import Type, Dict, Union, Optional, NoReturn
+from typing import Type, Dict, Union, Optional, NoReturn, List
 
 from pydantic import BaseModel
 
@@ -12,18 +12,27 @@ from fastapi_event.exceptions import (
     EmptyContextException,
     RequiredParameterException,
     ParameterCountException,
+    InvalidOrderTypeException,
 )
 
 _handler_context: ContextVar[Optional, "EventHandler"] = ContextVar(
-    "_handler_context", default=None,
+    "_handler_context",
+    default=None,
 )
+
+
+class EventAndParameter:
+    event: Type[BaseEvent]
+    parameter: Optional[BaseModel] = None
 
 
 class EventHandlerValidator:
     EVENT_PARAMETER_COUNT = 2
 
     async def validate(
-        self, event: Type[BaseEvent], parameter: BaseModel = None,
+        self,
+        event: Type[BaseEvent],
+        parameter: BaseModel = None,
     ) -> Optional[NoReturn]:
         if not issubclass(event, BaseEvent):
             raise InvalidEventTypeException
@@ -70,9 +79,46 @@ class EventHandler:
         await asyncio.gather(*futures)
 
     async def _run_sequentially(self) -> None:
-        event: Type[BaseEvent]
+        event_maps = await self._get_sorted_event_maps()
+
+        for i in range(1, len(event_maps)):
+            info = event_maps.get(i)
+            for each in info:
+                await each.event().run(parameter=each.parameter)
+
+        not_ordered_events = event_maps.get(None)
+        if not not_ordered_events:
+            return
+
+        for each in not_ordered_events:
+            await each.event().run(parameter=each.parameter)
+
+    async def _get_sorted_event_maps(
+        self,
+    ) -> Union[Dict[Optional[int], List[EventAndParameter]], NoReturn]:
+        """
+        event_maps = {
+            1: [EventAndParameter],
+            2: [EventAndParameter],
+            None: [EventAndParameter],
+        }
+        """
+        event_maps: Dict[Optional[int], List[EventAndParameter]] = {None: []}
+
         for event, parameter in self.events.items():
-            await event().run(parameter=parameter)
+            info = EventAndParameter(event=event, parameter=parameter)
+
+            if not isinstance(event.ORDER, int):
+                raise InvalidOrderTypeException
+
+            if not event.ORDER:
+                event_maps.get(None).append(info)
+            elif event.ORDER not in event_maps:
+                event_maps[event.ORDER] = [info]
+            else:
+                event_maps.get(event.ORDER).append(info)
+
+        return event_maps
 
 
 class EventHandlerMeta(type):

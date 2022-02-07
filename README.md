@@ -28,6 +28,30 @@ class TestEvent(BaseEvent):
 
 Inherit `BaseEvent` and override `run()` method.
 
+```python
+from fastapi_event import BaseEvent
+
+
+class FirstEvent(BaseEvent):
+    ORDER = 1  # HERE(Optional)
+    
+    async def run(self, parameter=None):
+        ...
+
+
+class SecondEvent(BaseEvent):
+    ORDER = 2  # HERE(Optional)
+    
+    async def run(self, parameter=None):
+        ...
+```
+
+If you want to determine the order between events, specify `ORDER` in your event. 
+
+Then, regardless of the order in which the events are stored, they will be executed in the order specified in `ORDER` variable.
+
+However, `ORDER` does not work when `run_at_once=True`.
+
 ### Parameter(optional)
 
 ```python

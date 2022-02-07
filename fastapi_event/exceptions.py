@@ -21,3 +21,8 @@ class ParameterCountException(Exception):
 class RequiredParameterException(Exception):
     def __init__(self, cls_name):
         super().__init__(f"`{cls_name}` event require parameter")
+
+
+class InvalidOrderTypeException(Exception):
+    def __init__(self):
+        super().__init__("ORDER must be type of `int`")
