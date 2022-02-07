@@ -108,7 +108,7 @@ class EventHandler:
         for event, parameter in self.events.items():
             info = EventAndParameter(event=event, parameter=parameter)
 
-            if not isinstance(event.ORDER, int):
+            if event.ORDER and not isinstance(event.ORDER, int):
                 raise InvalidOrderTypeException
 
             if not event.ORDER:

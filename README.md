@@ -92,7 +92,7 @@ Set `@EventListener()` decorator on the function that emits the event.
 @EventListener(run_at_once=False)
 ```
 
-If you pass `run_at_once=False`, it will execute in the order they were stored. 
+If you pass `run_at_once=False`, it will execute in the order in which `store()` is called. (or according to the `ORDER` variable defined in the event)
 
 Otherwise, it will execute through `asyncio.gather()` to run at once.
 
