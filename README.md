@@ -65,12 +65,12 @@ async def test():
 Set `@EventListener()` decorator on the function that emits the event.
 
 ```python
-@EventListener(run_at_once=True)
+@EventListener(run_at_once=False)
 ```
 
-If you pass `run_at_once=True`, it will execute through `asyncio.gather()`.
+If you pass `run_at_once=False`, it will execute in the order they were stored. 
 
-Otherwise, they are executed in the order they were stored.
+Otherwise, it will execute through `asyncio.gather()` to run at once.
 
 ### Store event
 

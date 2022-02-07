@@ -52,7 +52,7 @@ class EventHandler:
         await self.validator.validate(event=event, parameter=parameter)
         self.events[event] = parameter
 
-    async def publish(self, run_at_once: bool = False) -> None:
+    async def publish(self, run_at_once: bool = True) -> None:
         if run_at_once is True:
             await self._run_at_once()
         else:
@@ -80,7 +80,7 @@ class EventHandlerMeta(type):
         handler = self._get_event_handler()
         await handler.store(event=event, parameter=parameter)
 
-    async def publish(self, run_at_once: bool = False) -> None:
+    async def publish(self, run_at_once: bool = True) -> None:
         handler = self._get_event_handler()
         await handler.publish(run_at_once=run_at_once)
 

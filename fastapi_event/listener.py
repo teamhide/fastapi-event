@@ -2,7 +2,7 @@ from fastapi_event.handler import event_handler
 
 
 class EventListener:
-    def __init__(self, run_at_once: bool = False):
+    def __init__(self, run_at_once: bool = True):
         self.run_at_once = run_at_once
 
     def __call__(self, func):
