@@ -21,7 +21,7 @@ _handler_context: ContextVar[Optional, "EventHandler"] = ContextVar(
 )
 
 
-class EventAndParameter:
+class EventAndParameter(BaseModel):
     event: Type[BaseEvent]
     parameter: Optional[BaseModel] = None
 
