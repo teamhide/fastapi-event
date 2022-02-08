@@ -1,6 +1,9 @@
-import pytest
+from typing import Union, Type
 
-from fastapi_event import event_handler
+import pytest
+from pydantic import BaseModel
+
+from fastapi_event import event_handler, BaseEvent, EventListener
 from fastapi_event.exceptions import (
     InvalidEventTypeException,
     InvalidParameterTypeException,
@@ -14,6 +17,25 @@ from tests.events import (
     TestEventDoNotHaveParameter,
     TestEventParameter,
 )
+
+
+class FirstEvent(BaseEvent):
+    ORDER = 1
+
+    async def run(self, parameter: Union[Type[BaseModel], None] = None) -> None:
+        ...
+
+
+class SecondEvent(BaseEvent):
+    ORDER = 2
+
+    async def run(self, parameter: Union[Type[BaseModel], None] = None) -> None:
+        ...
+
+
+class NoneOrderEvent(BaseEvent):
+    async def run(self, parameter: Union[Type[BaseModel], None] = None) -> None:
+        ...
 
 
 @pytest.mark.asyncio
@@ -175,6 +197,118 @@ async def test_store_with_required_parameter_exception(app_with_middleware, clie
 
     @app.get("/")
     async def get():
+        await test()
+
+    client.get("/")
+
+
+@pytest.mark.asyncio
+async def test_order(app_with_middleware, client):
+    app = app_with_middleware
+
+    @EventListener()
+    async def test():
+        await event_handler.store(event=FirstEvent)
+        await event_handler.store(event=SecondEvent)
+        maps = await event_handler._get_event_handler()._get_sorted_event_maps()
+
+        assert maps.get(None) == []
+
+        assert len(maps.get(1)) == 1
+        assert maps.get(1)[0].event == FirstEvent
+        assert maps.get(1)[0].parameter is None
+
+        assert len(maps.get(2)) == 1
+        assert maps.get(2)[0].event == SecondEvent
+        assert maps.get(2)[0].parameter is None
+
+    @app.get("/")
+    async def test_get():
+        await test()
+
+    client.get("/")
+
+
+@pytest.mark.asyncio
+async def test_order_if_the_order_of_the_store_is_different(app_with_middleware, client):
+    app = app_with_middleware
+
+    @EventListener()
+    async def test():
+        await event_handler.store(event=SecondEvent)
+        await event_handler.store(event=FirstEvent)
+        maps = await event_handler._get_event_handler()._get_sorted_event_maps()
+
+        assert maps.get(None) == []
+
+        assert len(maps.get(1)) == 1
+        assert maps.get(1)[0].event == FirstEvent
+        assert maps.get(1)[0].parameter is None
+
+        assert len(maps.get(2)) == 1
+        assert maps.get(2)[0].event == SecondEvent
+        assert maps.get(2)[0].parameter is None
+
+    @app.get("/")
+    async def test_get():
+        await test()
+
+    client.get("/")
+
+
+@pytest.mark.asyncio
+async def test_order_with_none_order(app_with_middleware, client):
+    app = app_with_middleware
+
+    @EventListener()
+    async def test():
+        await event_handler.store(event=FirstEvent)
+        await event_handler.store(event=SecondEvent)
+        await event_handler.store(event=NoneOrderEvent)
+        maps = await event_handler._get_event_handler()._get_sorted_event_maps()
+
+        assert maps.get(None)[0].event == NoneOrderEvent
+        assert maps.get(None)[0].parameter is None
+
+        assert len(maps.get(1)) == 1
+        assert maps.get(1)[0].event == FirstEvent
+        assert maps.get(1)[0].parameter is None
+
+        assert len(maps.get(2)) == 1
+        assert maps.get(2)[0].event == SecondEvent
+        assert maps.get(2)[0].parameter is None
+
+    @app.get("/")
+    async def test_get():
+        await test()
+
+    client.get("/")
+
+
+@pytest.mark.asyncio
+async def test_order_with_none_order_if_the_order_of_the_store_is_different(app_with_middleware, client):
+    app = app_with_middleware
+
+    @EventListener()
+    async def test():
+        await event_handler.store(event=SecondEvent)
+        await event_handler.store(event=FirstEvent)
+        await event_handler.store(event=NoneOrderEvent)
+        maps = await event_handler._get_event_handler()._get_sorted_event_maps()
+
+        assert maps.get(None)[0].event == NoneOrderEvent
+        assert maps.get(None)[0].parameter is None
+
+        assert len(maps.get(1)) == 1
+        assert maps.get(1)[0].event == FirstEvent
+        assert maps.get(1)[0].parameter is None
+
+        assert len(maps.get(2)) == 1
+        assert maps.get(2)[0].event == SecondEvent
+        assert maps.get(2)[0].parameter is None
+
+    @app.get("/")
+    async def test_get():
         await test()
 
     client.get("/")
