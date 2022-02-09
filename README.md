@@ -2,6 +2,7 @@
 [![license]](/LICENSE)
 [![pypi]](https://pypi.org/project/fastapi-event/)
 [![pyversions]](http://pypi.python.org/pypi/fastapi-event)
+[![Downloads](https://pepy.tech/badge/fastapi-event)](https://pepy.tech/project/fastapi-event)
 
 ---
 
