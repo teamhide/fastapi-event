@@ -80,18 +80,23 @@ class EventHandler:
 
     async def _run_sequentially(self) -> None:
         event_maps = await self._get_sorted_event_maps()
+        keys = await self._get_sorted_keys(maps=event_maps)
 
-        for i in range(1, len(event_maps)):
-            info = event_maps.get(i)
+        for key in keys:
+            info = event_maps.get(key)
             for each in info:
                 await each.event().run(parameter=each.parameter)
 
-        not_ordered_events = event_maps.get(None)
-        if not not_ordered_events:
-            return
+    async def _get_sorted_keys(
+        self, maps: Dict[Optional[int], List[EventAndParameter]]
+    ) -> List[Optional[int]]:
+        keys: List[Optional[int]] = sorted(
+            [key for key in maps.keys() if key is not None]
+        )
+        if maps.get(None):
+            keys.append(None)
 
-        for each in not_ordered_events:
-            await each.event().run(parameter=each.parameter)
+        return keys
 
     async def _get_sorted_event_maps(
         self,
