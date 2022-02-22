@@ -61,7 +61,7 @@ class EventHandler:
         await self.validator.validate(event=event, parameter=parameter)
         self.events[event] = parameter
 
-    async def publish(self, run_at_once: bool = True) -> None:
+    async def _publish(self, run_at_once: bool = True) -> None:
         if run_at_once is True:
             await self._run_at_once()
         else:
@@ -111,11 +111,10 @@ class EventHandler:
         event_maps: Dict[Optional[int], List[EventAndParameter]] = {None: []}
 
         for event, parameter in self.events.items():
-            info = EventAndParameter(event=event, parameter=parameter)
-
             if event.ORDER and not isinstance(event.ORDER, int):
                 raise InvalidOrderTypeException
 
+            info = EventAndParameter(event=event, parameter=parameter)
             if not event.ORDER:
                 event_maps.get(None).append(info)
             elif event.ORDER not in event_maps:
@@ -131,9 +130,9 @@ class EventHandlerMeta(type):
         handler = self._get_event_handler()
         await handler.store(event=event, parameter=parameter)
 
-    async def publish(self, run_at_once: bool = True) -> None:
+    async def _publish(self, run_at_once: bool = True) -> None:
         handler = self._get_event_handler()
-        await handler.publish(run_at_once=run_at_once)
+        await handler._publish(run_at_once=run_at_once)
 
     def _get_event_handler(self) -> Union[EventHandler, NoReturn]:
         try:

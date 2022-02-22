@@ -12,7 +12,7 @@ class EventListener:
             except Exception as e:
                 raise e from None
 
-            await event_handler.publish(run_at_once=self.run_at_once)
+            await event_handler._publish(run_at_once=self.run_at_once)
             return result
 
         return _inner
