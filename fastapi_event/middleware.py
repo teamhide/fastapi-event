@@ -1,22 +1,20 @@
-from fastapi import Request
-from starlette.middleware.base import (
-    BaseHTTPMiddleware,
-    RequestResponseEndpoint,
-)
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from fastapi_event.handler import event_handler
 
 
-class EventHandlerMiddleware(BaseHTTPMiddleware):
-    async def dispatch(
+class EventHandlerMiddleware:
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(
         self,
-        request: Request,
-        call_next: RequestResponseEndpoint,
-    ):
+        scope: Scope,
+        receive: Receive,
+        send: Send,
+    ) -> None:
         try:
             with event_handler():
-                response = await call_next(request)
+                await self.app(scope, receive, send)
         except Exception as e:
-            raise e from None
-
-        return response
+            raise e
