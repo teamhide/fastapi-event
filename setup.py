@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="fastapi-event",
-    version="0.1.1",
+    version="0.1.2",
     author="Hide",
     author_email="padocon@naver.com",
     description="Event dispatcher for FastAPI",
