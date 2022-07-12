@@ -16,8 +16,7 @@ from fastapi_event.exceptions import (
 )
 
 _handler_context: ContextVar[Optional, "EventHandler"] = ContextVar(
-    "_handler_context",
-    default=None,
+    "_handler_context", default=None,
 )
 
 
@@ -30,9 +29,7 @@ class EventHandlerValidator:
     EVENT_PARAMETER_COUNT = 2
 
     async def validate(
-        self,
-        event: Type[BaseEvent],
-        parameter: BaseModel = None,
+        self, event: Type[BaseEvent], parameter: BaseModel = None,
     ) -> Optional[NoReturn]:
         if not issubclass(event, BaseEvent):
             raise InvalidEventTypeException
@@ -142,12 +139,13 @@ class EventHandlerMeta(type):
 
 
 class EventHandlerDelegator(metaclass=EventHandlerMeta):
+    validator = EventHandlerValidator()
+
     def __init__(self):
         self.token = None
 
     def __enter__(self):
-        validator = EventHandlerValidator()
-        self.token = _handler_context.set(EventHandler(validator=validator))
+        self.token = _handler_context.set(EventHandler(validator=self.validator))
         return type(self)
 
     def __exit__(self, exc_type, exc_value, traceback):
