@@ -1,9 +1,8 @@
 import asyncio
 import inspect
 from contextvars import ContextVar
-from typing import Type, Dict, Union, Optional, NoReturn, List
-
 from pydantic import BaseModel
+from typing import Type, Dict, Union, Optional, List
 
 from fastapi_event.base import BaseEvent
 from fastapi_event.exceptions import (
@@ -16,7 +15,8 @@ from fastapi_event.exceptions import (
 )
 
 _handler_context: ContextVar[Optional, "EventHandler"] = ContextVar(
-    "_handler_context", default=None,
+    "_handler_context",
+    default=None,
 )
 
 
@@ -30,7 +30,7 @@ class EventHandlerValidator:
 
     async def validate(
         self, event: Type[BaseEvent], parameter: BaseModel = None,
-    ) -> Optional[NoReturn]:
+    ) -> None:
         if not issubclass(event, BaseEvent):
             raise InvalidEventTypeException
 
@@ -97,7 +97,7 @@ class EventHandler:
 
     async def _get_sorted_event_maps(
         self,
-    ) -> Union[Dict[Optional[int], List[EventAndParameter]], NoReturn]:
+    ) -> Dict[Optional[int], List[EventAndParameter]]:
         """
         event_maps = {
             1: [EventAndParameter],
@@ -131,7 +131,7 @@ class EventHandlerMeta(type):
         handler = self._get_event_handler()
         await handler._publish(run_at_once=run_at_once)
 
-    def _get_event_handler(self) -> Union[EventHandler, NoReturn]:
+    def _get_event_handler(self) -> EventHandler:
         try:
             return _handler_context.get()
         except LookupError:
